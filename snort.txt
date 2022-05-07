@@ -1,0 +1,9 @@
+log ip any any -> 192.168.1.0/24 1:1024
+log udp any any -> 192.168.1.0/24 1:1024 
+log tcp any any -> 192.168.1.0/24 :6000
+alert tcp !192.168.1.0/24 any -> 192.168.1.0/24 111 (content: "|00 01 86 a5|"; msg: "external mountd access";)
+alert udp 192.168.43.89 any -> 102.132.100.36 any (msg: "just udp traffic to facebook";)
+alert tcp 192.168.43.89 any -> 102.132.100.36 any (msg: "just udp traffic to facebook";)
+alert tcp any any -> any any (msg: "just tcp traffic")
+alert icmpv4 192.168.43.89 any -> 102.132.100.36 any (msg: "ping to free.facebook";)
+
