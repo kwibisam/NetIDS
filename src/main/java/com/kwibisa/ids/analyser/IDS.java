@@ -1,12 +1,11 @@
-package com.km.ids;
+package com.kwibisa.ids.analyser;
 
-import com.km.ids.analyser.snort.SnortMatcher;
-import com.km.ids.data.PcapMonitor;
+import com.kwibisa.ids.ui.App;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.pcap4j.core.PcapNativeException;
+import javax.swing.JOptionPane;
 import org.pcap4j.core.PcapNetworkInterface;
 import org.pcap4j.core.Pcaps;
 
@@ -18,18 +17,19 @@ public class IDS extends Thread{
     
     private List<PcapNetworkInterface> devices;
     private List<PcapMonitor> pcaps;
-    private Main ui;
-    private final SnortMatcher snort;
-    
-    private static long lastTime;
-    private static long delta = 0;
-    private static long dur = 5000;
-    
-    public IDS(Main ui, SnortMatcher snort){
-        this.ui = ui;
-        this.snort = snort;
+    private MatchRules matchRules;
+    private final App app;
+    private ClassifyInstance model;
+   
+    public IDS(App app){
+        this.app = app;
     }
 
+    public void init(MatchRules matchRules, ClassifyInstance model){
+       this.matchRules = matchRules;
+       this.model = model;
+    }
+    
     private void capture(){
         boolean hasWork = false;
         for(PcapMonitor monitor: pcaps){
@@ -49,14 +49,14 @@ public class IDS extends Thread{
     }
     
     public void init(){
-        System.out.println("Preparing to Listen to packets");
+        
         try {
             devices = Pcaps.findAllDevs();
             pcaps = initNifs();
-            System.out.println("Initialisation complete. Devices monitored: "+pcaps.size());
         } 
-        catch (PcapNativeException ex) {
+        catch (Exception ex) {
             Logger.getLogger(IDS.class.getName()).log(Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(null,""+ IDS.class.getName() + ex,"Warning",1);
         }
     }
     
@@ -64,30 +64,17 @@ public class IDS extends Thread{
         List<PcapMonitor> handles = new ArrayList<>(devices.size());
         for(PcapNetworkInterface nif: devices){
             if(!nif.isLoopBack() && !nif.getAddresses().isEmpty()){
-                PcapMonitor monitor = new PcapMonitor(nif,ui,snort);
+                PcapMonitor monitor = new PcapMonitor(nif,matchRules, app, model);
                 monitor.start();
                 handles.add(monitor);
             }
         }
         return handles;
     }
+    
     public void run(){
-        lastTime = System.currentTimeMillis();
         init();
-        while(!interrupted()){
-            
-            long current = System.currentTimeMillis();
-            delta += current - lastTime;
-            if(delta > dur){
-               // ui.getUdp().setValue(PcapMonitor.udpCount+"");
-               // ui.getTcp().setValue(PcapMonitor.tcpCount+"");
-                //PcapMonitor.tcpCount = 0;
-                //PcapMonitor.udpCount = 0;
-                //PcapMonitor.icmpCnt = 0;
-                delta = 0;
-                lastTime = current;
-            }
-            
+        while(!interrupted()){ 
             capture();
             
         }

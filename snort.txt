@@ -1,9 +1,18 @@
-log ip any any -> 192.168.1.0/24 1:1024
-log udp any any -> 192.168.1.0/24 1:1024 
-log tcp any any -> 192.168.1.0/24 :6000
-alert tcp !192.168.1.0/24 any -> 192.168.1.0/24 111 (content: "|00 01 86 a5|"; msg: "external mountd access";)
-alert udp 192.168.43.89 any -> 102.132.100.36 any (msg: "just udp traffic to facebook";)
-alert tcp 192.168.43.89 any -> 102.132.100.36 any (msg: "just udp traffic to facebook";)
-alert tcp any any -> any any (msg: "just tcp traffic")
-alert icmpv4 192.168.43.89 any -> 102.132.100.36 any (msg: "ping to free.facebook";)
+#alert icmpv4 any any <- any any (msg: "ICMP"; classType: "PING")
+#alert icmpv4 any any <- 192.168.43.89 any (msg: "ICMP"; classType: "PING TO HOME")
 
+#Nmap Xmas scan
+alert tcp any any <- 192.168.43.89 22 (msg: "Nmap XMAS Tree scan"; flags:"FPU";classType:"Nmap XMAS scan";)
+
+#Nmap default scan
+alert icmpv4 any any <- 192.168.43.89 any (classType: "NMAP scan"; dsize:28)
+
+#TCP port scan
+alert tcp any any <- 192.168.43.89 23 (msg: "TCP Port Scanning"; classType: "tcp port scan")
+
+#UDP port scan
+alert udp any any <- 192.168.43.89 68 (msg: "UDP Port Scanning"; classType: "udp port scan")
+
+
+#TCP Null scan
+alert tcp any any <- 192.168.43.89 22 (msg:“Nmap NULL Scan”; flags:0; classType: "Null scan")
